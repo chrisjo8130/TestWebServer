@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 5px;
+        }
+
+        body {
+            margin: 1%;
+        }
+
+        table {
+            background-color: white;
+            color: darkgreen;
+            border-collapse: collapse;
+            text-align: center;
+            vertical-align: middle;
+            margin: 10px 0px;
+        }
+
+        table,
+        td,
+        th {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            height: 2em;
+            padding: 4px;
+        }
+
+        #data-table {
+            display: grid;
+            grid-template: 50px 50px 50px / 200px 200px;
+            grid-gap: 10px;
+            padding: 10px;
+            margin: 0px;
+            background-color: beige;
+            color: darkgreen;
+        }
+
+        .nav {
+            list-style-type: none;
+            height: 100%;
+            border: black 1px solid;
+            margin: 10px 0px;
+        }
+
+            .nav li {
+                display: inline-block;
+                vertical-align: middle;
+            }
+
+            .nav button {
+                height: 100%;
+            }
+
+        .data-label {
+            font-size: 1.5em;
+        }
+
+        #drop-menu {
+            width: 100%;
+            height: 2.5em;
+        }
+
+        #survey-data {
+            width: 50%;
+            background-color: azure;
+            display: none;
+        }
+
+        #precision-data {
+            display: none;
+        }
+    </style>
+
+    <script>
+        function PollData() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    document.getElementById("lot-value").innerHTML = xhttp.responseText;
+                }
+            }
+            xhttp.open("GET", "192.168.1.110/Data", true);
+            xhttp.send();
+        }
+
+        function PollPos() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var responseArray = xhttp.responseText.split(',');
+                    document.getElementById("lat-value").innerHTML = responseArray[0];
+                    document.getElementById("lon-value").innerHTML = responseArray[1];
+                    document.getElementById("height-value").innerHTML = responseArray[2];
+                    refreshPos();
+                }
+            }
+            xhttp.open("GET", "192.168.1.110/Pos", true);
+            xhttp.send();
+        }
+
+        function PollSurvey() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var responseArray = xhttp.responseText.split(',');
+                    document.getElementById("read-acc").innerHTML = responseArray[0];
+                    document.getElementById("read-time").innerHTML = responseArray[1];
+                    document.getElementById("survey-status").innerHTML = responseArray[3];
+                    refreshSurvey();
+                }
+            }
+            xhttp.open("GET", "192.168.1.110/SurveyStatus", true);
+            xhttp.send();
+        }
+
+        function StartSurvey() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    document.getElementById("survey-status").innerHTML = xhttp.responseText;
+                }
+            }
+            xhttp.open("GET", "192.168.1.110/SurveyStart", true);
+            xhttp.send();
+        }
+
+        function showSurvey() {
+            if (document.getElementById("survey-data").style.display == "block") {
+                document.getElementById("survey-data").style.display = "none";
+            } else document.getElementById("survey-data").style.display = "block";
+        }
+
+        function showPrecision() {
+            if (document.getElementById("precision-data").style.display == "block") {
+                document.getElementById("precision-data").style.display = "none";
+            } else document.getElementById("precision-data").style.display = "block";
+        }
+
+        function savePoint() {
+            var point = document.getElementById("point").value;
+            var description = document.getElementById("description").value;
+            var lat = document.getElementById("lat-value").innerHTML;
+            var lon = document.getElementById("lon-value").innerHTML;
+            var height = document.getElementById("height-value").innerHTML;
+            var para = document.createElement("p");
+            var node = document.createTextNode(point + ", " +
+                description + "," + lat + "," + lon + "," + height);
+            para.appendChild(node);
+            document.getElementById("stored").appendChild(para);
+            document.getElementById("point").value = parseInt(document.getElementById("point").value) + 1;
+        }
+
+        
+
+        //polling functions for Survey and Pos
+        var posId;
+        var surveyId;
+        function refreshPos() {
+            posId = window.setTimeout(PollPos, 400);
+        }
+        function stopRefreshPos() {
+            window.clearTimeout(posId);
+        }
+
+        function refreshSurvey() {
+            surveyId = window.setTimeout(PollSurvey, 5000);
+        }
+        function stopRefreshSurvey() {
+            window.clearTimeout(surveyId);
+        }
+
+    </script>
+
+</head>
+
+<body>
+    <button class="nrk-masthead__bars" aria-label="Meny" aria-expanded="false">
+        <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24">
+            <g fill-rule="evenodd">
+                <rect width="20" height="2" x="2" y="4" />
+                <rect width="20" height="2" x="2" y="11" />
+                <rect width="20" height="2" x="2" y="18" />
+            </g>
+        </svg>
+    </button>
+
+    <div id="data-table">
+        <div class="data-label">Lat</div>
+        <div id="lat-value">121515.1234</div>
+        <div class="data-label">Lon</div>
+        <div id="lon-value">121515.2345</div>
+        <div class="data-label">Height</div>
+        <div id="height-value">1584.146</div>
+        <div id="survey-status">Survey unknown</div>
+    </div>
+    <button type="submit" onclick="PollData()">Poll</button>
+    <button type="submit" onclick="refreshPos()">GetPos</button>
+    <button type="submit" onclick="stopRefreshPos()">Stop Pos</button>
+    <button type="submit" onclick="StartSurvey()">Start Survey</button>
+    <button type="submit" onclick="refreshSurvey()">Poll Survey</button>
+    <button type="submit" onclick="stopRefreshSurvey()">Stop Survey</button>
+    <div id="drop-menu" class="nav">
+
+        <button id="disp-surv" onclick="showSurvey()">Survey</button>
+        <button id="disp-prec" onclick="showPrecision()">Precision</button>
+        <button id="something" onclick="downloadFile()">Save to file</button>
+        <input id="fileName" type="text" value="MyFile.txt" placeholder="filename.txt">
+        <output id="output"></output>
+
+    </div>
+    <div id="survey-data">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Configured</th>
+                <th>Reading</th>
+                <th></th>
+            </tr>
+            <tr>
+                <td>Survey Time</td>
+                <td id="configured-time">300</td>
+                <td id="read-time">x</td>
+                <td>seconds</td>
+            </tr>
+            <tr>
+                <td>Accuracy</td>
+                <td id="configured-acc">2</td>
+                <td id="read-acc">x</td>
+                <td>meter</td>
+            </tr>
+        </table>
+    </div>
+    <div id="precision-data">
+        <table>
+            <tr>
+                <th>hdop</th>
+                <th>vdop</th>
+                <th>Satellites</th>
+                <th></th>
+            </tr>
+            <tr>
+                <td>Survey Time</td>
+                <td id="configured-time">300</td>
+                <td id="read-time">x</td>
+                <td>seconds</td>
+            </tr>
+        </table>
+    </div>
+    <form>
+        #:<br />
+        <input id="point" type="number" value="1" /><br /> Description:
+        <br />
+        <input id="description" type="text" /><br>
+
+    </form>
+    <button id="save" onclick="savePoint()">Save</button>
+    <div id="stored">
+
+    </div>
+
+    <script>
+        //var container = document.querySelector('#container');
+        var typer = document.getElementById('stored');
+        var output = document.querySelector('output');
+
+        const MIME_TYPE = 'text/plain';
+
+        var cleanUp = function (a) {
+            a.textContent = 'Downloaded';
+            a.dataset.disabled = true;
+
+            // Need a small delay for the revokeObjectURL to work properly.
+            setTimeout(function () {
+                window.URL.revokeObjectURL(a.href);
+            }, 1500);
+        };
+
+        var downloadFile = function () {
+            window.URL = window.webkitURL || window.URL;
+
+            var prevLink = output.querySelector('a');
+            if (prevLink) {
+                window.URL.revokeObjectURL(prevLink.href);
+                output.innerHTML = '';
+            }
+
+            var bb = new Blob([typer.innerHTML.toString()], {
+                type: MIME_TYPE
+            });
+
+            var a = document.createElement('a');
+            a.download = document.getElementById('fileName').value;
+            a.href = window.URL.createObjectURL(bb);
+            a.textContent = 'Download ready';
+
+            a.dataset.downloadurl = [MIME_TYPE, a.download, a.href].join(':');
+            a.draggable = true; // Don't really need, but good practice.
+            a.classList.add('dragout');
+
+            output.appendChild(a);
+
+            a.onclick = function (e) {
+                if ('disabled' in this.dataset) {
+                    return false;
+                }
+
+                cleanUp(this);
+            };
+        };
+    </script>
+
+
+</body>
+
+</html>
